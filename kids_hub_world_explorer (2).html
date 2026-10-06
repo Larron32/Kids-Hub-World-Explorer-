@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 text-slate-800">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kids Hub: World Explorer</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Canvas Confetti Library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            nunito: ['Nunito', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              yellow: '#FBBF24',
+              orange: '#FB923C',
+              sky: '#38BDF8',
+              blue: '#3B82F6',
+              indigo: '#6366F1',
+              emerald: '#34D399',
+              rose: '#FB7185',
+              purple: '#A855F7',
+              pink: '#EC4899'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body { 
+      font-family: 'Nunito', sans-serif; 
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #fef3c7 100%);
+    }
+    h1, h2, h3, h4, .font-heading { font-family: 'Fredoka', sans-serif; }
+    
+    .kid-card {
+      transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .kid-card:hover {
+      transform: translateY(-6px) scale(1.01);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+    }
+    
+    .stamp-badge {
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      0% { transform: scale(0.4) rotate(-10deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 antialiased selection:bg-amber-300 selection:text-slate-900">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b-4 border-amber-300 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-20">
+        
+        <!-- Logo -->
+        <div class="flex items-center gap-3 cursor-pointer group" onclick="switchTab('explore')">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center text-white text-2xl font-black shadow-md shadow-orange-300/50 group-hover:rotate-12 transition-transform">
+            <i class="fa-solid fa-globe"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-black tracking-wide text-amber-500 group-hover:text-amber-600 transition-colors">
+              Kids Hub
+            </h1>
+            <p class="text-xs font-extrabold text-sky-500 tracking-wider uppercase -mt-1">World Explorer</p>
+          </div>
+        </div>
+
+        <!-- Desktop Navigation Tabs -->
+        <nav class="hidden md:flex items-center gap-2">
+          <button onclick="switchTab('explore')" id="nav-explore" class="nav-btn px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 bg-amber-400 text-slate-900 shadow-md shadow-amber-200">
+            <i class="fa-solid fa-compass text-slate-900"></i> Explore Nations
+          </button>
+          <button onclick="switchTab('faiths')" id="nav-faiths" class="nav-btn px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="fa-solid fa-hands-praying text-purple-500"></i> World Faiths
+          </button>
+          <button onclick="switchTab('festivals')" id="nav-festivals" class="nav-btn px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+            <i class="fa-solid fa-holly-berry text-rose-500"></i> Celebrations
+          </button>
+          <button onclick="switchTab('passport')" id="nav-passport" class="nav-btn px-4 py-2.5 rounded-2xl text-sm font-extrabold transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 relative">
+            <i class="fa-solid fa-passport text-blue-500"></i> My Passport
+            <span id="stamp-count-badge" class="ml-1 bg-rose-500 text-white text-xs font-black px-2 py-0.5 rounded-full shadow-sm">0</span>
+          </button>
+        </nav>
+
+        <!-- Fast Search Bar -->
+        <div class="relative w-40 sm:w-64">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="global-search" oninput="handleSearch()" placeholder="Search 130 countries, foods..." class="w-full pl-9 pr-3 py-2 rounded-2xl bg-slate-100 border-2 border-slate-200 text-sm font-bold text-slate-700 placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:bg-white transition-all">
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden flex overflow-x-auto px-4 py-2.5 bg-slate-50 border-t border-slate-200 gap-2 no-scrollbar">
+      <button onclick="switchTab('explore')" id="m-nav-explore" class="m-nav-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-black bg-amber-400 text-slate-900 shadow-sm">
+        <i class="fa-solid fa-compass"></i> Explore
+      </button>
+      <button onclick="switchTab('faiths')" id="m-nav-faiths" class="m-nav-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200">
+        <i class="fa-solid fa-hands-praying"></i> Faiths
+      </button>
+      <button onclick="switchTab('festivals')" id="m-nav-festivals" class="m-nav-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200">
+        <i class="fa-solid fa-holly-berry"></i> Festivals
+      </button>
+      <button onclick="switchTab('passport')" id="m-nav-passport" class="m-nav-btn whitespace-nowrap px-3.5 py-1.5 rounded-xl text-xs font-bold text-slate-600 bg-white border border-slate-200">
+        <i class="fa-solid fa-passport"></i> Passport
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Application Body -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- EXPLORE TAB (Nations Grid) -->
+    <section id="tab-explore" class="tab-content space-y-6">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500 p-6 sm:p-10 shadow-lg shadow-sky-200 text-white">
+        <div class="absolute -right-8 -bottom-8 opacity-15 text-9xl">
+          <i class="fa-solid fa-earth-americas"></i>
+        </div>
+        <div class="relative z-10 max-w-2xl space-y-3">
+          <span class="inline-block px-3.5 py-1 bg-white/20 backdrop-blur-md rounded-full text-xs font-black uppercase tracking-wider text-yellow-200 border border-white/30">
+            🌟 Welcome Junior Explorer!
+          </span>
+          <h2 class="text-3xl sm:text-4xl font-black leading-tight drop-shadow-sm">
+            Explore 130 Countries & Earn Passport Stamps!
+          </h2>
+          <p class="text-sky-50 text-sm sm:text-base font-bold">
+            Learn greetings, landmarks, and traditional foods. Pass the Quiz for each country to unlock your official stamp!
+          </p>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="flex flex-wrap items-center justify-between gap-3 bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-sm">
+        <div class="flex flex-wrap gap-2" id="continent-filters">
+          <button onclick="filterContinent('All')" class="filter-btn active-filter px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-amber-400 text-slate-900 border-2 border-amber-300 shadow-sm transition">All Nations (130)</button>
+          <button onclick="filterContinent('Asia')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">Asia</button>
+          <button onclick="filterContinent('Africa')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">Africa</button>
+          <button onclick="filterContinent('Europe')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">Europe</button>
+          <button onclick="filterContinent('North America')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">North America</button>
+          <button onclick="filterContinent('South America')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">South America</button>
+          <button onclick="filterContinent('Oceania')" class="filter-btn px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-slate-100 text-slate-600 border-2 border-transparent hover:bg-slate-200 transition">Oceania</button>
+        </div>
+        <div class="text-xs font-black text-slate-400 px-2" id="country-count-label">Showing 130 Countries</div>
+      </div>
+
+      <!-- Countries Grid Container -->
+      <div id="countries-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <!-- Injected Dynamically via JS -->
+      </div>
+    </section>
+
+    <!-- WORLD FAITHS TAB -->
+    <section id="tab-faiths" class="tab-content hidden space-y-6">
+      <div class="rounded-3xl bg-gradient-to-r from-purple-500 via-indigo-500 to-blue-500 p-6 sm:p-10 shadow-lg text-white">
+        <h2 class="text-3xl font-black mb-2">🙏 World Faiths & Spiritual Wisdom</h2>
+        <p class="text-purple-100 text-sm sm:text-base font-bold max-w-2xl">
+          Discover how people around the world celebrate peace, kindness, community, and devotion across major global traditions.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="faiths-grid">
+        <!-- Faith cards injected dynamically -->
+      </div>
+    </section>
+
+    <!-- CELEBRATIONS TAB -->
+    <section id="tab-festivals" class="tab-content hidden space-y-6">
+      <div class="rounded-3xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 p-6 sm:p-10 shadow-lg text-white">
+        <h2 class="text-3xl font-black mb-2">🎉 Global Festivals & Celebrations</h2>
+        <p class="text-rose-100 text-sm sm:text-base font-bold max-w-2xl">
+          From lanterns and spring blossoms to masquerade balls and water splashing, explore how world cultures join together in joy!
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="festivals-grid">
+        <!-- Festival cards injected dynamically -->
+      </div>
+    </section>
+
+    <!-- PASSPORT TAB -->
+    <section id="tab-passport" class="tab-content hidden space-y-6">
+      <div class="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-400 p-6 sm:p-10 rounded-3xl shadow-lg text-slate-900">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="bg-white/80 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black uppercase text-amber-800">
+              Official Explorer Document
+            </span>
+            <h2 class="text-3xl sm:text-4xl font-black mt-2">Junior Explorer Passport</h2>
+            <p class="text-slate-800 font-extrabold text-sm sm:text-base mt-1">
+              Pass country quizzes to earn official stamps. Collect all 130!
+            </p>
+          </div>
+          <div class="bg-white/90 p-4 rounded-2xl text-center shadow-md border-2 border-amber-300">
+            <div id="passport-percent" class="text-3xl font-black text-amber-500">0%</div>
+            <div class="text-xs font-black text-slate-500 uppercase">Completed</div>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-white/40 backdrop-blur-md p-2 rounded-2xl">
+          <div class="w-full bg-white rounded-xl h-4 overflow-hidden border border-amber-300">
+            <div id="passport-progress-bar" class="bg-gradient-to-r from-emerald-400 to-teal-500 h-full w-0 transition-all duration-500"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passport Stamps Grid -->
+      <div class="bg-white p-6 rounded-3xl border-2 border-slate-100 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xl font-black text-slate-800">Collected Stamps</h3>
+          <button onclick="resetPassport()" class="text-xs font-black text-rose-500 hover:text-rose-700 bg-rose-50 px-3 py-1.5 rounded-xl border border-rose-200 transition">
+            <i class="fa-solid fa-rotate-left"></i> Reset Progress
+          </button>
+        </div>
+        <div id="passport-stamps-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          <!-- Stamps render dynamically -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Empowering Footer Banner -->
+  <footer class="mt-12 bg-white border-t-4 border-amber-300 shadow-lg py-10 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+      
+      <!-- Brand & Tagline -->
+      <div class="space-y-2 max-w-lg">
+        <div class="flex items-center justify-center md:justify-start gap-2">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-white text-base font-black shadow-sm">
+            <i class="fa-solid fa-earth-americas"></i>
+          </div>
+          <span class="text-xl font-black text-amber-500 tracking-wide">Kids Hub: World Explorer</span>
+        </div>
+        <p class="text-xs font-black text-slate-600">
+          🌍✨ Empowering Young Learners Around the Globe • Discovering Cultures, Inspiring Curious Minds 💡
+        </p>
+        <p class="text-[11px] font-bold text-slate-400 leading-relaxed">
+          Building global empathy, cultural appreciation, and curiosity through play, quizzes, and storytelling for kids everywhere.
+        </p>
+      </div>
+
+      <!-- Quick Nav Buttons -->
+      <div class="flex flex-wrap items-center justify-center gap-2">
+        <button onclick="switchTab('explore')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-amber-100 text-slate-700 font-extrabold text-xs transition">
+          <i class="fa-solid fa-compass text-amber-500"></i> Explore 130 Countries
+        </button>
+        <button onclick="switchTab('faiths')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-purple-100 text-slate-700 font-extrabold text-xs transition">
+          <i class="fa-solid fa-hands-praying text-purple-500"></i> World Faiths
+        </button>
+        <button onclick="switchTab('festivals')" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-700 font-extrabold text-xs transition">
+          <i class="fa-solid fa-holly-berry text-rose-500"></i> Global Festivals
+        </button>
+      </div>
+
+    </div>
+
+    <div class="max-w-7xl mx-auto border-t border-slate-100 mt-6 pt-6 flex flex-col sm:flex-row items-center justify-between text-slate-400 text-[11px] font-bold gap-2">
+      <div>© Kids Hub Educational Platform • Free Interactive Learning Resource</div>
+      <div class="flex items-center gap-4">
+        <span><i class="fa-solid fa-heart text-rose-400"></i> Made for Young Explorers</span>
+        <span><i class="fa-solid fa-shield-halved text-emerald-400"></i> Kid-Safe Content</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- COUNTRY DETAIL MODAL -->
+  <div id="modal-detail" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full overflow-hidden shadow-2xl border-4 border-amber-300 my-8">
+      <div id="modal-detail-content">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- QUIZ MODAL -->
+  <div id="modal-quiz" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border-4 border-sky-300 relative">
+      <button onclick="closeQuizModal()" class="absolute top-4 right-4 w-9 h-9 bg-slate-100 rounded-full font-black text-slate-500 hover:bg-slate-200 flex items-center justify-center">✕</button>
+      <div id="modal-quiz-content">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const countriesData = [
+      // ASIA
+      { id:"japan", name:"Japan", flag:"🇯🇵", continent:"Asia", capital:"Tokyo", lang:"Japanese", food:"Sushi & Ramen", faith:"Shinto & Buddhism", landmark:"Mount Fuji & Fushimi Inari Shrine", greeting:"Konnichiwa", speakText:"Konnichiwa", fact:"Japan has high-speed bullet trains called Shinkansen that float on magnets!", quizQ:"What is the capital of Japan?", options:["Kyoto", "Tokyo", "Osaka", "Sapporo"], answer:1 },
+      { id:"china", name:"China", flag:"🇨🇳", continent:"Asia", capital:"Beijing", lang:"Mandarin", food:"Peking Duck & Dumplings", faith:"Buddhism & Taoism", landmark:"The Great Wall of China", greeting:"Nǐ Hǎo", speakText:"Nihao", fact:"Giant pandas are native to China and spend 12 hours a day eating bamboo!", quizQ:"Which famous structure is in China?", options:["Eiffel Tower", "The Great Wall", "Colosseum", "Pyramids"], answer:1 },
+      { id:"india", name:"India", flag:"🇮🇳", continent:"Asia", capital:"New Delhi", lang:"Hindi & English", food:"Samosas & Curry", faith:"Hinduism, Islam, Sikhism & Jainism", landmark:"Taj Mahal", greeting:"Namaste", speakText:"Namaste", fact:"India is home to peacocks, Bengal tigers, and colorful festival celebrations!", quizQ:"What is a famous traditional greeting in India?", options:["Aloha", "Namaste", "Ciao", "Hola"], answer:1 },
+      { id:"indonesia", name:"Indonesia", flag:"🇮🇩", continent:"Asia", capital:"Jakarta", lang:"Indonesian", food:"Nasi Goreng", faith:"Islam, Hinduism & Christianity", landmark:"Borobudur Temple", greeting:"Selamat Pagi", speakText:"Selamat Pagi", fact:"Indonesia is made up of over 17,000 tropical islands!", quizQ:"How many islands make up Indonesia approximately?", options:["100", "500", "17,000+", "2,000"], answer:2 },
+      { id:"southkorea", name:"South Korea", flag:"🇰🇷", continent:"Asia", capital:"Seoul", lang:"Korean", food:"Kimchi & Bibimbap", faith:"Buddhism & Christianity", landmark:"Gyeongbokgung Palace", greeting:"Annyeonghaseyo", speakText:"Annyeonghaseyo", fact:"Taekwondo, a famous martial art, originated in Korea!", quizQ:"What is a traditional Korean side dish made of fermented cabbage?", options:["Sushi", "Kimchi", "Paella", "Tacos"], answer:1 },
+      { id:"thailand", name:"Thailand", flag:"🇹🇭", continent:"Asia", capital:"Bangkok", lang:"Thai", food:"Pad Thai", faith:"Buddhism", landmark:"Grand Palace Bangkok", greeting:"Sawatdee", speakText:"Sawatdee", fact:"Thailand is known as the Land of Smiles!", quizQ:"What animal is deeply honored and revered in Thailand?", options:["Elephant", "Penguin", "Panda", "Kangaroo"], answer:0 },
+      { id:"vietnam", name:"Vietnam", flag:"🇻🇳", continent:"Asia", capital:"Hanoi", lang:"Vietnamese", food:"Pho Noodle Soup", faith:"Buddhism & Folk Faiths", landmark:"Ha Long Bay", greeting:"Xin Chào", speakText:"Sin Chao", fact:"Vietnam has emerald green waters dotted with thousands of limestone islands!", quizQ:"What popular noodle soup is from Vietnam?", options:["Pho", "Ramen", "Udon", "Spaghetti"], answer:0 },
+      { id:"philippines", name:"Philippines", flag:"🇵🇭", continent:"Asia", capital:"Manila", lang:"Filipino & English", food:"Adobo & Halo-Halo", faith:"Christianity & Islam", landmark:"Chocolate Hills of Bohol", greeting:"Kamusta", speakText:"Kamusta", fact:"The Philippines has over 7,000 islands and famous colorful Jeepney buses!", quizQ:"What are Bohol's famous cone-shaped hills called?", options:["Emerald Hills", "Chocolate Hills", "Pancake Hills", "Marble Hills"], answer:1 },
+      { id:"malaysia", name:"Malaysia", flag:"🇲🇾", continent:"Asia", capital:"Kuala Lumpur", lang:"Malay", food:"Nasi Lemak", faith:"Islam, Buddhism & Hinduism", landmark:"Petronas Twin Towers", greeting:"Selamat", speakText:"Selamat", fact:"Malaysia is home to giant Rafflesia flowers—the largest flowers on Earth!", quizQ:"What iconic twin towers stand tall in Kuala Lumpur?", options:["Petronas Towers", "Eiffel Towers", "CN Towers", "Willis Towers"], answer:0 },
+      { id:"singapore", name:"Singapore", flag:"🇸🇬", continent:"Asia", capital:"Singapore", lang:"English, Malay, Mandarin, Tamil", food:"Hainanese Chicken Rice", faith:"Buddhism, Islam, Christianity, Hinduism", landmark:"Gardens by the Bay Supertrees", greeting:"Hello", speakText:"Hello", fact:"Singapore features magical glowing Supertree towers in its futuristic gardens!", quizQ:"What garden attraction features giant glowing tree towers in Singapore?", options:["Central Park", "Gardens by the Bay", "Hyde Park", "Keukenhof"], answer:1 },
+      { id:"saudiarabia", name:"Saudi Arabia", flag:"🇸🇦", continent:"Asia", capital:"Riyadh", lang:"Arabic", food:"Kabsa & Dates", faith:"Islam", landmark:"Al-Ula & Hegra Monuments", greeting:"Marhaban", speakText:"Marhaban", fact:"Saudi Arabia is home to the vast Arabian Desert and ancient carved stone tombs!", quizQ:"What sweet fruit grows abundantly on oasis palms in Saudi Arabia?", options:["Apples", "Dates", "Bananas", "Strawberries"], answer:1 },
+      { id:"uae", name:"United Arab Emirates", flag:"🇦🇪", continent:"Asia", capital:"Abu Dhabi", lang:"Arabic", food:"Shawarma & Machboos", faith:"Islam", landmark:"Burj Khalifa (Tallest Building in the World)", greeting:"Salam", speakText:"Salam", fact:"The Burj Khalifa in Dubai is the tallest building on Earth!", quizQ:"Where is the world's tallest building located?", options:["UAE (Dubai)", "Japan", "USA", "France"], answer:0 },
+      { id:"turkey", name:"Turkey", flag:"🇹🇷", continent:"Asia/Europe", capital:"Ankara", lang:"Turkish", food:"Kebabs & Baklava", faith:"Islam", landmark:"Hagia Sophia & Cappadocia Balloons", greeting:"Merhaba", speakText:"Merhaba", fact:"In Cappadocia, Turkey, hundreds of hot air balloons fill the sky every sunrise!", quizQ:"What hot air balloon sky destination is famous in Turkey?", options:["Cappadocia", "Paris", "Tokyo", "Cairo"], answer:0 },
+      { id:"israel", name:"Israel", flag:"🇮🇱", continent:"Asia", capital:"Jerusalem", lang:"Hebrew & Arabic", food:"Falafel & Hummus", faith:"Judaism, Islam, Christianity & Druze", landmark:"Western Wall & Old City of Jerusalem", greeting:"Shalom", speakText:"Shalom", fact:"The Dead Sea in Israel is so salty that people float easily on top of the water!", quizQ:"What sea is famous for letting people float effortlessly due to salt?", options:["Dead Sea", "Red Sea", "Black Sea", "Coral Sea"], answer:0 },
+      { id:"pakistan", name:"Pakistan", flag:"🇵🇰", continent:"Asia", capital:"Islamabad", lang:"Urdu & English", food:"Biryani", faith:"Islam", landmark:"Badshahi Mosque & K2 Mountain", greeting:"Assalamu Alaikum", speakText:"Assalamu Alaikum", fact:"Pakistan is home to K2, the second highest mountain peak in the world!", quizQ:"What is the second highest mountain on Earth found in Pakistan?", options:["Everest", "K2", "Fuji", "Kilimanjaro"], answer:1 },
+      { id:"bangladesh", name:"Bangladesh", flag:"🇧🇩", continent:"Asia", capital:"Dhaka", lang:"Bengali", food:"Kacchi Biryani & Fish Curry", faith:"Islam & Hinduism", landmark:"Sundarbans Mangrove Forest", greeting:"Shagotom", speakText:"Shagotom", fact:"The Sundarbans in Bangladesh is the world's largest mangrove forest, home to Royal Bengal tigers!", quizQ:"What famous big cat swims in Bangladesh's mangrove forest?", options:["Royal Bengal Tiger", "Lion", "Cheetah", "Snow Leopard"], answer:0 },
+      { id:"srilanka", name:"Sri Lanka", flag:"🇱🇰", continent:"Asia", capital:"Sri Jayawardenepura Kotte", lang:"Sinhala & Tamil", food:"Kottu Roti & Rice Curry", faith:"Buddhism, Hinduism, Islam, Christianity", landmark:"Sigiriya Lion Rock Fortress", greeting:"Ayubowan", speakText:"Ayubowan", fact:"Sigiriya is an ancient palace built atop a massive 200-meter-high rock!", quizQ:"What ancient rock fortress is shaped like a giant lion in Sri Lanka?", options:["Sigiriya", "Machu Picchu", "Petra", "Colosseum"], answer:0 },
+      { id:"nepal", name:"Nepal", flag:"🇳🇵", continent:"Asia", capital:"Kathmandu", lang:"Nepali", food:"Dal Bhat & Momos", faith:"Hinduism & Buddhism", landmark:"Mount Everest", greeting:"Namaste", speakText:"Namaste", fact:"Nepal is home to Mount Everest, the highest peak on Earth, and has a triangular flag!", quizQ:"What is the tallest mountain peak on Earth located in Nepal?", options:["Mount Everest", "K2", "Mount Blanc", "Kilimanjaro"], answer:0 },
+      { id:"mongolia", name:"Mongolia", flag:"🇲🇳", continent:"Asia", capital:"Ulaanbaatar", lang:"Mongolian", food:"Buuz Dumplings", faith:"Buddhism & Shamanism", landmark:"Gobi Desert & Genghis Khan Statue", greeting:"Sain Bainuu", speakText:"Sain Bainuu", fact:"Nomadic families in Mongolia live in cozy round wooden tents called gers or yurts!", quizQ:"What are traditional round tents called in Mongolia?", options:["Igloos", "Gers / Yurts", "Tepees", "Cabins"], answer:1 },
+      { id:"kazakhstan", name:"Kazakhstan", flag:"🇰🇿", continent:"Asia", capital:"Astana", lang:"Kazakh & Russian", food:"Beshbarmak", faith:"Islam & Christianity", landmark:"Baiterek Tower", greeting:"Salem", speakText:"Salem", fact:"Kazakhstan is the largest landlocked country in the world!", quizQ:"Kazakhstan is famous for being the largest ______ country.", options:["Island", "Landlocked", "Tropical", "Glacier"], answer:1 },
+      { id:"uzbekistan", name:"Uzbekistan", flag:"🇺🇿", continent:"Asia", capital:"Tashkent", lang:"Uzbek", food:"Plov Rice", faith:"Islam", landmark:"Samarkand Registan Square", greeting:"Assalomu Alaykum", speakText:"Assalomu Alaykum", fact:"Samarkand in Uzbekistan was a major stop along the Silk Road trading route!", quizQ:"What ancient trade route passed through Uzbekistan?", options:["Silk Road", "Route 66", "Spice Way", "Royal Highway"], answer:0 },
+      { id:"jordan", name:"Jordan", flag:"🇯🇴", continent:"Asia", capital:"Amman", lang:"Arabic", food:"Mansaf", faith:"Islam & Christianity", landmark:"Petra Rose City", greeting:"Marhaba", speakText:"Marhaba", fact:"Petra is an ancient city carved directly into pink sandstone desert cliffs!", quizQ:"What color sandstone cliffs make up the ancient city of Petra in Jordan?", options:["Pink / Rose", "Green", "Blue", "Black"], answer:0 },
+      { id:"lebanon", name:"Lebanon", flag:"🇱🇧", continent:"Asia", capital:"Beirut", lang:"Arabic", food:"Tabbouleh & Shawarma", faith:"Christianity, Islam & Druze", landmark:"Cedars of God Reserve", greeting:"Kiffak", speakText:"Kiffak", fact:"Lebanon is famous for its ancient cedar trees, featured on its national flag!", quizQ:"What iconic tree is featured on Lebanon's flag?", options:["Cedar Tree", "Oak Tree", "Pine Tree", "Palm Tree"], answer:0 },
+      { id:"oman", name:"Oman", flag:"🇴🇲", continent:"Asia", capital:"Muscat", lang:"Arabic", food:"Shuwa", faith:"Islam", landmark:"Sultan Qaboos Grand Mosque", greeting:"Salam", speakText:"Salam", fact:"Oman is famous for growing sweet frankincense trees for centuries!", quizQ:"What fragrant tree resin is Oman famous for?", options:["Frankincense", "Maple Syrup", "Cinnamon", "Vanilla"], answer:0 },
+      { id:"qatar", name:"Qatar", flag:"🇶🇦", continent:"Asia", capital:"Doha", lang:"Arabic", food:"Machboos", faith:"Islam", landmark:"Museum of Islamic Art & Inland Sea", greeting:"Marhaba", speakText:"Marhaba", fact:"Qatar hosted the 2022 FIFA World Cup with futuristic cooling stadiums!", quizQ:"What major world sport event did Qatar host in 2022?", options:["FIFA World Cup", "Olympics", "Tour de France", "Super Bowl"], answer:0 },
+      { id:"kuwait", name:"Kuwait", flag:"🇰🇼", continent:"Asia", capital:"Kuwait City", lang:"Arabic", food:"Machboos", faith:"Islam", landmark:"Kuwait Towers", greeting:"Hala", speakText:"Hala", fact:"The Kuwait Towers feature beautiful striped blue spheres that hold water tanks and restaurants!", quizQ:"What shaped structures decorate the Kuwait Towers?", options:["Blue Spheres", "Pyramids", "Cube Towers", "Spires"], answer:0 },
+      { id:"bahrain", name:"Bahrain", flag:"🇧🇭", continent:"Asia", capital:"Manama", lang:"Arabic", food:"Machboos", faith:"Islam", landmark:"Tree of Life", greeting:"Marhaba", speakText:"Marhaba", fact:"Bahrain's Tree of Life has grown in the middle of a dry desert for over 400 years!", quizQ:"What 400-year-old natural marvel grows in Bahrain's desert?", options:["Tree of Life", "Giant Cactus", "Rainforest", "Bamboo Grove"], answer:0 },
+      { id:"iraq", name:"Iraq", flag:"🇮🇶", continent:"Asia", capital:"Baghdad", lang:"Arabic & Kurdish", food:"Masgouf Fish", faith:"Islam & Christianity", landmark:"Ziggurat of Ur & Babylon Ruins", greeting:"Marhaba", speakText:"Marhaba", fact:"Ancient Mesopotamia in modern Iraq was known as the 'Cradle of Civilization'!", quizQ:"Iraq was historically known as the Cradle of ______.", options:["Civilization", "Mountains", "Oceans", "Ice"], answer:0 },
+      { id:"iran", name:"Iran", flag:"🇮🇷", continent:"Asia", capital:"Tehran", lang:"Persian (Farsi)", food:"Ghormeh Sabzi & Kebabs", faith:"Islam & Zoroastrianism", landmark:"Persepolis Ancient Ruins", greeting:"Salam", speakText:"Salam", fact:"Persian carpets from Iran are world-famous for intricate hand-knotted artistic patterns!", quizQ:"What hand-woven artistic items is Iran world-famous for?", options:["Persian Carpets", "Silk Hats", "Wooden Toys", "Glass Vases"], answer:0 },
+      { id:"afghanistan", name:"Afghanistan", flag:"🇦🇫", continent:"Asia", capital:"Kabul", lang:"Pashto & Dari", food:"Kabuli Pulao", faith:"Islam", landmark:"Band-e Amir National Park Lakes", greeting:"Salam", speakText:"Salam", fact:"Band-e Amir features six natural deep blue lakes surrounded by pink limestone cliffs!", quizQ:"What beautiful natural feature makes Band-e Amir National Park famous?", options:["Deep Blue Lakes", "Volcanoes", "Glaciers", "Rainforest"], answer:0 },
+
+      // AFRICA
+      { id:"egypt", name:"Egypt", flag:"🇪🇬", continent:"Africa", capital:"Cairo", lang:"Arabic", food:"Koshary & Falafel", faith:"Islam & Coptic Christianity", landmark:"Great Pyramids of Giza & Sphinx", greeting:"Salam", speakText:"Salam", fact:"Ancient Egyptians invented paper from papyrus reeds along the Nile River!", quizQ:"What giant stone structures were built as tombs in ancient Egypt?", options:["Pyramids", "Castles", "Pagodas", "Skyscrapers"], answer:0 },
+      { id:"kenya", name:"Kenya", flag:"🇰🇪", continent:"Africa", capital:"Nairobi", lang:"Swahili & English", food:"Ugali & Sukuma Wiki", faith:"Christianity & Islam", landmark:"Maasai Mara Wildlife Reserve", greeting:"Jambo", speakText:"Jambo", fact:"Kenya is famous for the Great Migration of millions of wildebeests and zebras!", quizQ:"What animal migration happens every year in Kenya?", options:["Wildebeests & Zebras", "Penguins", "Bears", "Monarch Butterflies"], answer:0 },
+      { id:"southafrica", name:"South Africa", flag:"🇿🇦", continent:"Africa", capital:"Pretoria", lang:"Zulu, Xhosa, Afrikaans, English", food:"Bobotie & Braai BBQ", faith:"Christianity", landmark:"Table Mountain & Kruger Park", greeting:"Sawubona", speakText:"Sawubona", fact:"South Africa is home to wild penguins living on Boulders Beach!", quizQ:"What flightless sea birds live on South Africa's Boulders Beach?", options:["Penguins", "Ostriches", "Parrots", "Eagles"], answer:0 },
+      { id:"morocco", name:"Morocco", flag:"🇲🇦", continent:"Africa", capital:"Rabat", lang:"Arabic & Amazigh", food:"Couscous & Tagine", faith:"Islam", landmark:"Chefchaouen Blue City", greeting:"Marhaba", speakText:"Marhaba", fact:"Chefchaouen in Morocco is a vibrant mountain town painted completely blue!", quizQ:"What color are all the buildings painted in Morocco's Chefchaouen?", options:["Blue", "Red", "Yellow", "Green"], answer:0 },
+      { id:"nigeria", name:"Nigeria", flag:"🇳🇬", continent:"Africa", capital:"Abuja", lang:"English, Hausa, Yoruba, Igbo", food:"Jollof Rice & Suya", faith:"Islam & Christianity", landmark:"Zuma Rock", greeting:"Pele", speakText:"Pele", fact:"Nigeria is famous for Nollywood, one of the biggest movie industries in the world!", quizQ:"What popular food dish is celebrated across Nigeria?", options:["Jollof Rice", "Tacos", "Noodles", "Croissants"], answer:0 },
+      { id:"ethiopia", name:"Ethiopia", flag:"🇪🇹", continent:"Africa", capital:"Addis Ababa", lang:"Amharic", food:"Injera & Doro Wat", faith:"Orthodox Christianity & Islam", landmark:"Rock-Hewn Churches of Lalibela", greeting:"Selam", speakText:"Selam", fact:"Coffee was first discovered in the mountain forests of Ethiopia!", quizQ:"What famous worldwide morning drink originated in Ethiopia?", options:["Coffee", "Orange Juice", "Lemonade", "Green Tea"], answer:0 },
+      { id:"ghana", name:"Ghana", flag:"🇬🇭", continent:"Africa", capital:"Accra", lang:"English & Twi", food:"Jollof Rice & Fufu", faith:"Christianity & Islam", landmark:"Cape Coast Castle & Kakum Canopy Walk", greeting:"Akwaaba", speakText:"Akwaaba", fact:"Ghana is known for colorful hand-woven Kente cloth patterns!", quizQ:"What colorful woven cloth tradition comes from Ghana?", options:["Kente Cloth", "Silk", "Denim", "Tartan"], answer:0 },
+      { id:"tanzania", name:"Tanzania", flag:"🇹🇿", continent:"Africa", capital:"Dodoma", lang:"Swahili & English", food:"Ugali & Chipsi Mayai", faith:"Christianity & Islam", landmark:"Mount Kilimanjaro & Serengeti", greeting:"Jambo", speakText:"Jambo", fact:"Mount Kilimanjaro in Tanzania is the tallest free-standing mountain in the world!", quizQ:"What highest African peak is located in Tanzania?", options:["Mount Kilimanjaro", "Everest", "Fuji", "Kilimanjaro"], answer:0 },
+      { id:"uganda", name:"Uganda", flag:"🇺🇬", continent:"Africa", capital:"Kampala", lang:"English & Swahili", food:"Matooke Plantains", faith:"Christianity & Islam", landmark:"Bwindi Impenetrable Forest", greeting:"Oli Otya", speakText:"Oli Otya", fact:"Uganda is home to rare mountain gorillas living in lush rainforests!", quizQ:"What endangered ape lives in Uganda's Bwindi forest?", options:["Mountain Gorilla", "Chimpanzee", "Orangutan", "Gibbon"], answer:0 },
+      { id:"senegal", name:"Senegal", flag:"🇸🇳", continent:"Africa", capital:"Dakar", lang:"French & Wolof", food:"Thieboudienne Rice & Fish", faith:"Islam", landmark:"Lake Retba (Pink Lake)", greeting:"Nanga Def", speakText:"Nanga Def", fact:"Lake Retba in Senegal turns bright pink due to friendly algae living in high salt water!", quizQ:"What unique color is Senegal's famous Lake Retba?", options:["Pink", "Purple", "Orange", "Bright Green"], answer:0 },
+      { id:"madagascar", name:"Madagascar", flag:"🇲🇬", continent:"Africa", capital:"Antananarivo", lang:"Malagasy & French", food:"Romazava", faith:"Christianity & Indigenous Traditions", landmark:"Avenue of the Baobabs", greeting:"Salama", speakText:"Salama", fact:"90% of wildlife in Madagascar, like lemurs, live nowhere else on Earth!", quizQ:"What famous playful primate is native only to Madagascar?", options:["Lemur", "Panda", "Koala", "Sloth"], answer:0 },
+      { id:"rwanda", name:"Rwanda", flag:"🇷🇼", continent:"Africa", capital:"Kigali", lang:"Kinyarwanda & English", food:"Ugali & Brochettes", faith:"Christianity", landmark:"Volcanoes National Park", greeting:"Muraho", speakText:"Muraho", fact:"Rwanda is known as the 'Land of a Thousand Hills' and is one of the cleanest nations in the world!", quizQ:"Rwanda is famously known as the Land of a Thousand ______.", options:["Hills", "Lakes", "Rivers", "Forests"], answer:0 },
+      { id:"algeria", name:"Algeria", flag:"🇩🇿", continent:"Africa", capital:"Algiers", lang:"Arabic & Tamazight", food:"Couscous", faith:"Islam", landmark:"Tassili n'Ajjer Rock Art", greeting:"Salam", speakText:"Salam", fact:"Algeria is the largest country by area on the continent of Africa!", quizQ:"Algeria is the largest country by area on which continent?", options:["Africa", "Europe", "Asia", "South America"], answer:0 },
+      { id:"tunisia", name:"Tunisia", flag:"🇹🇳", continent:"Africa", capital:"Tunis", lang:"Arabic", food:"Couscous & Brik", faith:"Islam", landmark:"Amphitheatre of El Jem", greeting:"Aslama", speakText:"Aslama", fact:"Tunisia has ancient Roman arenas and whitewashed coastal houses in Sidi Bou Said!", quizQ:"What ancient coastal village in Tunisia is famous for blue doors and white walls?", options:["Sidi Bou Said", "Cairo", "Dakar", "Luanda"], answer:0 },
+      { id:"angola", name:"Angola", flag:"🇦🇴", continent:"Africa", capital:"Luanda", lang:"Portuguese", food:"Muamba de Galinha", faith:"Christianity", landmark:"Kalandula Falls", greeting:"Olá", speakText:"Ola", fact:"Kalandula Falls in Angola is one of the largest waterfalls by volume in Africa!", quizQ:"What massive natural waterfall is located in Angola?", options:["Kalandula Falls", "Niagara Falls", "Victoria Falls", "Iguazu Falls"], answer:0 },
+      { id:"zambia", name:"Zambia", flag:"🇿🇲", continent:"Africa", capital:"Lusaka", lang:"English & Bemba", food:"Nshima", faith:"Christianity", landmark:"Victoria Falls (Mosi-oa-Tunya)", greeting:"Muli Shani", speakText:"Muli Shani", fact:"Victoria Falls creates the world's largest sheet of falling water!", quizQ:"What famous waterfall borders Zambia and Zimbabwe?", options:["Victoria Falls", "Niagara Falls", "Angel Falls", "Iguazu Falls"], answer:0 },
+      { id:"zimbabwe", name:"Zimbabwe", flag:"🇿🇼", continent:"Africa", capital:"Harare", lang:"Shona, Ndebele, English", food:"Sadza", faith:"Christianity", landmark:"Great Zimbabwe Ruins", greeting:"Mhoro", speakText:"Mhoro", fact:"Great Zimbabwe is an ancient stone city built without any mortar or cement!", quizQ:"Great Zimbabwe ruins were built entirely out of what material without mortar?", options:["Stone", "Wood", "Mud", "Ice"], answer:0 },
+      { id:"botswana", name:"Botswana", flag:"🇧🇼", continent:"Africa", capital:"Gaborone", lang:"English & Setswana", food:"Seswaa", faith:"Christianity", landmark:"Okavango Delta", greeting:"Dumela", speakText:"Dumela", fact:"The Okavango Delta floods into a desert, creating an oasis for thousands of wild elephants!", quizQ:"What animal herds swim across the Okavango Delta in Botswana?", options:["Elephants", "Polar Bears", "Kangaroos", "Llamas"], answer:0 },
+      { id:"namibia", name:"Namibia", flag:"🇳🇦", continent:"Africa", capital:"Windhoek", lang:"English, Oshiwambo, Afrikaans", food:"Kapana", faith:"Christianity", landmark:"Sossusvlei Red Dunes", greeting:"Dumela", speakText:"Dumela", fact:"Namibia has some of the highest red sand dunes in the world in the Namib Desert!", quizQ:"What bright color are the famous sand dunes at Sossusvlei in Namibia?", options:["Red / Orange", "Blue", "Green", "White"], answer:0 },
+      { id:"cameroon", name:"Cameroon", flag:"🇨🇲", continent:"Africa", capital:"Yaoundé", lang:"French & English", food:"Ndole", faith:"Christianity & Islam", landmark:"Mount Cameroon", greeting:"Bonjour", speakText:"Bonjour", fact:"Cameroon is called 'Africa in Miniature' because it has deserts, beaches, mountains, and rainforests!", quizQ:"Why is Cameroon nicknamed 'Africa in Miniature'?", options:["It has all of Africa's diverse landscapes", "It is very small", "It is an island", "It has snow"], answer:0 },
+
+      // EUROPE
+      { id:"france", name:"France", flag:"🇫🇷", continent:"Europe", capital:"Paris", lang:"French", food:"Croissants & Crepes", faith:"Christianity & Secular Traditions", landmark:"Eiffel Tower & Louvre Museum", greeting:"Bonjour", speakText:"Bonjour", fact:"The Louvre Museum in Paris is the largest art museum in the world!", quizQ:"What landmark tower is located in Paris, France?", options:["Eiffel Tower", "Big Ben", "Leaning Tower", "CN Tower"], answer:0 },
+      { id:"germany", name:"Germany", flag:"🇩🇪", continent:"Europe", capital:"Berlin", lang:"German", food:"Pretzels & Bratwurst", faith:"Christianity", landmark:"Neuschwanstein Fairy Tale Castle", greeting:"Guten Tag", speakText:"Guten Tag", fact:"Neuschwanstein Castle inspired Sleeping Beauty's castle in Disney movies!", quizQ:"What fairytale castle inspired Disney in Germany?", options:["Neuschwanstein", "Windsor", "Versailles", "Prague Castle"], answer:0 },
+      { id:"uk", name:"United Kingdom", flag:"🇬🇧", continent:"Europe", capital:"London", lang:"English", food:"Fish & Chips", faith:"Christianity", landmark:"Big Ben & Stone Henge", greeting:"Hello", speakText:"Hello", fact:"Stonehenge is a mysterious ring of giant standing stones built 5,000 years ago!", quizQ:"What iconic clock tower stands in London, UK?", options:["Big Ben", "Eiffel Tower", "Baiterek", "Spire"], answer:0 },
+      { id:"italy", name:"Italy", flag:"🇮🇹", continent:"Europe", capital:"Rome", lang:"Italian", food:"Pizza & Gelato", faith:"Christianity (Catholic)", landmark:"Colosseum & Leaning Tower of Pisa", greeting:"Ciao", speakText:"Ciao", fact:"Italy invented pizza and has more ancient Roman ruins than anywhere on Earth!", quizQ:"What iconic leaning bell tower is located in Italy?", options:["Leaning Tower of Pisa", "Eiffel Tower", "Big Ben", "Burj Khalifa"], answer:0 },
+      { id:"spain", name:"Spain", flag:"🇪🇸", continent:"Europe", capital:"Madrid", lang:"Spanish", food:"Paella & Churros", faith:"Christianity", landmark:"Sagrada Família in Barcelona", greeting:"Hola", speakText:"Hola", fact:"In Spain, many people celebrate festivals with Flamenco dancing and guitar music!", quizQ:"What tasty savory rice dish is famous in Spain?", options:["Paella", "Sushi", "Pho", "Tacos"], answer:0 },
+      { id:"greece", name:"Greece", flag:"🇬🇷", continent:"Europe", capital:"Athens", lang:"Greek", food:"Moussaka & Greek Salad", faith:"Eastern Orthodox Christianity", landmark:"Parthenon in Athens", greeting:"Yassas", speakText:"Yassas", fact:"The Olympic Games were invented in ancient Greece over 2,700 years ago!", quizQ:"Where were the Olympic Games first invented?", options:["Greece", "France", "USA", "China"], answer:0 },
+      { id:"switzerland", name:"Switzerland", flag:"🇨🇭", continent:"Europe", capital:"Bern", lang:"German, French, Italian, Romansh", food:"Cheese Fondue & Chocolate", faith:"Christianity", landmark:"The Matterhorn Mountain", greeting:"Grüezi", speakText:"Gruezi", fact:"Switzerland is famous for delicious milk chocolate, cheese, and snowy Alpine peaks!", quizQ:"What famous pyramid-shaped Alpine peak is in Switzerland?", options:["The Matterhorn", "Everest", "Fuji", "Kilimanjaro"], answer:0 },
+      { id:"netherlands", name:"Netherlands", flag:"🇳🇱", continent:"Europe", capital:"Amsterdam", lang:"Dutch", food:"Stroopwafels & Cheese", faith:"Christianity & Secular", landmark:"Windmills of Kinderdijk & Tulip Fields", greeting:"Hallo", speakText:"Hallo", fact:"The Netherlands grows millions of colorful blooming tulips every spring!", quizQ:"What bright springtime flower is the Netherlands famous for?", options:["Tulips", "Roses", "Sunflowers", "Orchids"], answer:0 },
+      { id:"sweden", name:"Sweden", flag:"🇸🇪", continent:"Europe", capital:"Stockholm", lang:"Swedish", food:"Meatballs & Cinnamon Buns", faith:"Christianity", landmark:"Icehotel in Jukkasjärvi", greeting:"Hej", speakText:"Hej", fact:"Every winter, artists in Sweden rebuild an entire hotel made completely out of ice!", quizQ:"What icy building is reconstructed every winter in northern Sweden?", options:["Icehotel", "Ice Castle", "Igloo Tower", "Glacier Fort"], answer:0 },
+      { id:"norway", name:"Norway", flag:"🇳🇴", continent:"Europe", capital:"Oslo", lang:"Norwegian", food:"Waffles with Brown Cheese", faith:"Christianity", landmark:"Fjords & Northern Lights", greeting:"Hei", speakText:"Hei", fact:"In northern Norway, the sun doesn't set at all for weeks in the summer!", quizQ:"What glowing green light show dances across Norway's night sky?", options:["Northern Lights (Aurora)", "Fireworks", "Solar Flares", "Rainbows"], answer:0 },
+      { id:"finland", name:"Finland", flag:"🇫🇮", continent:"Europe", capital:"Helsinki", lang:"Finnish", food:"Rye Bread & Cinnamon Rolls", faith:"Christianity", landmark:"Santa Claus Village in Rovaniemi", greeting:"Moi", speakText:"Moi", fact:"Finland is consistently ranked as the happiest country in the world!", quizQ:"Finland is world-famous for being named the ______ nation.", options:["Happiest", "Hottest", "Largest", "Oldest"], answer:0 },
+      { id:"poland", name:"Poland", flag:"🇵🇱", continent:"Europe", capital:"Warsaw", lang:"Polish", food:"Pierogi Dumplings", faith:"Christianity (Catholic)", landmark:"Wawel Royal Castle", greeting:"Cześć", speakText:"Czesck", fact:"Poland is famous for pierogi, tasty stuffed dumplings filled with potato or fruit!", quizQ:"What delicious stuffed dumplings are popular in Poland?", options:["Pierogi", "Sushi", "Tacos", "Croissants"], answer:0 },
+      { id:"portugal", name:"Portugal", flag:"🇵🇹", continent:"Europe", capital:"Lisbon", lang:"Portuguese", food:"Pastel de Nata", faith:"Christianity", landmark:"Belém Tower & Pena Palace", greeting:"Olá", speakText:"Ola", fact:"Portugal produces half of the world's natural cork from cork oak trees!", quizQ:"What sweet custard pastry is Portugal's most famous treat?", options:["Pastel de Nata", "Churro", "Eclair", "Donut"], answer:0 },
+      { id:"ireland", name:"Ireland", flag:"🇮🇪", continent:"Europe", capital:"Dublin", lang:"English & Irish", food:"Irish Stew & Soda Bread", faith:"Christianity", landmark:"Cliffs of Moher & Blarney Castle", greeting:"Dia Duit", speakText:"Dia Duit", fact:"Ireland is nicknamed the 'Emerald Isle' because of its rolling green hills!", quizQ:"Why is Ireland nicknamed the Emerald Isle?", options:["Lush Green Hills", "Green Oceans", "Emerald Stones", "Painted Houses"], answer:0 },
+      { id:"austria", name:"Austria", flag:"🇦🇹", continent:"Europe", capital:"Vienna", lang:"German", food:"Sachertorte & Apple Strudel", faith:"Christianity", landmark:"Schönbrunn Palace", greeting:"Servus", speakText:"Servus", fact:"Famous classical music composers like Mozart and Beethoven lived in Vienna!", quizQ:"What famous composer lived and made music in Vienna, Austria?", options:["Mozart", "Shakespeare", "Da Vinci", "Picasso"], answer:0 },
+      { id:"belgium", name:"Belgium", flag:"🇧🇪", continent:"Europe", capital:"Brussels", lang:"Dutch, French, German", food:"Waffles, Frites, Chocolate", faith:"Christianity", landmark:"Atomium & Grand Place", greeting:"Bonjour / Hallo", speakText:"Bonjour", fact:"Belgium is world-famous for crispy waffles, fries, and comic book heroes!", quizQ:"What crispy breakfast food with grid squares comes from Belgium?", options:["Waffles", "Pancakes", "Toast", "Cereal"], answer:0 },
+      { id:"denmark", name:"Denmark", flag:"🇩🇰", continent:"Europe", capital:"Copenhagen", lang:"Danish", food:"Smørrebrød & Pastries", faith:"Christianity", landmark:"Little Mermaid Statue & Nyhavn", greeting:"Hej", speakText:"Hej", fact:"LEGO toy bricks were invented in Denmark!", quizQ:"What world-famous colorful toy building bricks were invented in Denmark?", options:["LEGO", "Play-Doh", "Marbles", "Yo-Yos"], answer:0 },
+      { id:"czechia", name:"Czech Republic", flag:"🇨🇿", continent:"Europe", capital:"Prague", lang:"Czech", food:"Svíčková & Trdelník", faith:"Secular & Christianity", landmark:"Charles Bridge & Prague Castle", greeting:"Ahoj", speakText:"Ahoj", fact:"Prague is nicknamed the 'City of a Hundred Spires'!", quizQ:"What nickname is given to Prague for its towers?", options:["City of a Hundred Spires", "Emerald City", "Golden Gate", "Sun City"], answer:0 },
+      { id:"hungary", name:"Hungary", flag:"🇭🇺", continent:"Europe", capital:"Budapest", lang:"Hungarian", food:"Goulash Soup", faith:"Christianity", landmark:"Hungarian Parliament & Danube River", greeting:"Szia", speakText:"Szia", fact:"Budapest has dozens of natural thermal hot spring baths!", quizQ:"Budapest is famous for its natural underground thermal ______.", options:["Hot Springs / Baths", "Volcanoes", "Ice Caves", "Salt Mines"], answer:0 },
+      { id:"romania", name:"Romania", flag:"🇷🇴", continent:"Europe", capital:"Bucharest", lang:"Romanian", food:"Sarmale Cabbage Rolls", faith:"Eastern Orthodox Christianity", landmark:"Bran Castle (Dracula's Castle)", greeting:"Bună", speakText:"Buna", fact:"Bran Castle in Transylvania inspired famous legends and stories!", quizQ:"What famous Transylvanian castle is located in Romania?", options:["Bran Castle", "Eiffel Tower", "Blenheim", "Chillon"], answer:0 },
+      { id:"ukraine", name:"Ukraine", flag:"🇺🇦", continent:"Europe", capital:"Kyiv", lang:"Ukrainian", food:"Borscht & Varenyky", faith:"Eastern Orthodox Christianity", landmark:"Pechersk Lavra Monastery", greeting:"Pryvit", speakText:"Pryvit", fact:"Ukraine is famous for hand-painted wooden Easter eggs called Pysanky!", quizQ:"What colorful painted traditional eggs come from Ukraine?", options:["Pysanky", "Origami", "Pinatas", "Matryoshka"], answer:0 },
+      { id:"croatia", name:"Croatia", flag:"🇭🇷", continent:"Europe", capital:"Zagreb", lang:"Croatian", food:"Peka", faith:"Christianity", landmark:"Plitvice Lakes National Park", greeting:"Bok", speakText:"Bok", fact:"Plitvice Lakes features 16 cascading turquoise lakes linked by waterfalls!", quizQ:"What natural feature links the 16 turquoise lakes in Plitvice National Park?", options:["Waterfalls", "Volcanoes", "Canyons", "Glaciers"], answer:0 },
+      { id:"iceland", name:"Iceland", flag:"🇮🇸", continent:"Europe", capital:"Reykjavik", lang:"Icelandic", food:"Skyr Yogurt", faith:"Christianity", landmark:"Blue Lagoon & Geysir", greeting:"Hæ", speakText:"Hi", fact:"Iceland is known as the Land of Fire and Ice because of glaciers and volcanoes!", quizQ:"Why is Iceland called the Land of Fire and Ice?", options:["Glaciers & Volcanoes", "Sun & Rain", "Sand & Snow", "Deserts & Rivers"], answer:0 },
+
+      // NORTH AMERICA
+      { id:"usa", name:"United States", flag:"🇺🇸", continent:"North America", capital:"Washington, D.C.", lang:"English", food:"Hamburgers & Apple Pie", faith:"Christianity, Judaism, Islam & Diverse", landmark:"Statue of Liberty & Grand Canyon", greeting:"Hello", speakText:"Hello", fact:"The Grand Canyon in Arizona is over a mile deep and carved by the Colorado River!", quizQ:"What giant natural canyon is located in Arizona, USA?", options:["Grand Canyon", "Copper Canyon", "Kings Canyon", "Fjord"], answer:0 },
+      { id:"canada", name:"Canada", flag:"🇨🇦", continent:"North America", capital:"Ottawa", lang:"English & French", food:"Poutine & Maple Syrup", faith:"Christianity & Diverse", landmark:"Niagara Falls & CN Tower", greeting:"Hello / Bonjour", speakText:"Hello", fact:"Canada produces over 70% of the entire world's pure maple syrup!", quizQ:"What sweet tree pancake topping is Canada famous for producing?", options:["Maple Syrup", "Honey", "Chocolate Sauce", "Jam"], answer:0 },
+      { id:"mexico", name:"Mexico", flag:"🇲🇽", continent:"North America", capital:"Mexico City", lang:"Spanish", food:"Tacos, Guacamole, Tamales", faith:"Christianity", landmark:"Chichén Itzá Mayan Pyramid", greeting:"Hola", speakText:"Hola", fact:"Monarch butterflies migrate thousands of miles every winter to Mexico's forests!", quizQ:"What famous ancient pyramid stands in Chichén Itzá, Mexico?", options:["Mayan Pyramid", "Great Pyramid", "Borobudur", "Ziggurat"], answer:0 },
+      { id:"guatemala", name:"Guatemala", flag:"🇬🇹", continent:"North America", capital:"Guatemala City", lang:"Spanish & Mayan Languages", food:"Pepian Stew", faith:"Christianity & Mayan Traditions", landmark:"Tikal Mayan Ruins in Rainforest", greeting:"Hola", speakText:"Hola", fact:"Guatemala has ancient Mayan temples towering above lush rainforest trees!", quizQ:"What ancient civilization built the ruins of Tikal in Guatemala?", options:["Mayan", "Inca", "Aztec", "Roman"], answer:0 },
+      { id:"costarica", name:"Costa Rica", flag:"🇨🇷", continent:"North America", capital:"San José", lang:"Spanish", food:"Gallo Pinto", faith:"Christianity", landmark:"Arenal Volcano & Cloud Forests", greeting:"Pura Vida", speakText:"Pura Vida", fact:"Costa Rica is home to colorful toucans, sloths, and 5% of Earth's biodiversity!", quizQ:"What slow-moving animal sleeps in tree canopy branches in Costa Rica?", options:["Sloth", "Cheetah", "Kangaroo", "Panda"], answer:0 },
+      { id:"jamaica", name:"Jamaica", flag:"🇯🇲", continent:"North America", capital:"Kingston", lang:"English & Patois", food:"Jerk Chicken & Plantains", faith:"Christianity & Rastafari", landmark:"Dunn's River Falls & Blue Mountains", greeting:"Wah Gwaan", speakText:"Wah Gwaan", fact:"Jamaica invented reggae music and world-famous Caribbean spices!", quizQ:"What musical style originated in Jamaica?", options:["Reggae", "Jazz", "Flamenco", "Opera"], answer:0 },
+      { id:"cuba", name:"Cuba", flag:"🇨🇺", continent:"North America", capital:"Havana", lang:"Spanish", food:"Ropa Vieja", faith:"Christianity", landmark:"Old Havana & Classic Vintage Cars", greeting:"Hola", speakText:"Hola", fact:"Havana's streets are filled with colorful restored 1950s classic cars!", quizQ:"What vintage vehicles are famous on Havana's city streets?", options:["1950s Classic Cars", "Bicycles", "Gondolas", "Sleds"], answer:0 },
+      { id:"panama", name:"Panama", flag:"🇵🇦", continent:"North America", capital:"Panama City", lang:"Spanish", food:"Sancocho Stew", faith:"Christianity", landmark:"Panama Canal", greeting:"Hola", speakText:"Hola", fact:"The Panama Canal is a water shortcut connecting the Atlantic and Pacific Oceans!", quizQ:"What major canal connects the Atlantic and Pacific Oceans in Panama?", options:["Panama Canal", "Suez Canal", "Erie Canal", "Grand Canal"], answer:0 },
+      { id:"dominicanrepublic", name:"Dominican Republic", flag:"🇩🇴", continent:"North America", capital:"Santo Domingo", lang:"Spanish", food:"La Bandera", faith:"Christianity", landmark:"Punta Cana Beaches & Zona Colonial", greeting:"Hola", speakText:"Hola", fact:"The Dominican Republic shares the island of Hispaniola with Haiti!", quizQ:"What ocean island does the Dominican Republic call home?", options:["Hispaniola", "Madagascar", "Tasmania", "Borneo"], answer:0 },
+
+      // SOUTH AMERICA
+      { id:"brazil", name:"Brazil", flag:"🇧🇷", continent:"South America", capital:"Brasília", lang:"Portuguese", food:"Feijoada & Pão de Queijo", faith:"Christianity", landmark:"Christ the Redeemer & Amazon Rainforest", greeting:"Olá", speakText:"Ola", fact:"The Amazon Rainforest in Brazil generates 20% of Earth's oxygen!", quizQ:"What giant tropical rainforest covers much of Brazil?", options:["Amazon Rainforest", "Congo Basin", "Daintree", "Taiga"], answer:0 },
+      { id:"argentina", name:"Argentina", flag:"🇦🇷", continent:"South America", capital:"Buenos Aires", lang:"Spanish", food:"Asado BBQ & Empanadas", faith:"Christianity", landmark:"Iguazu Falls & Perito Moreno Glacier", greeting:"Hola", speakText:"Hola", fact:"Argentina is the birthplace of the tango dance and home to Patagonia glaciers!", quizQ:"What massive waterfall system borders Argentina and Brazil?", options:["Iguazu Falls", "Niagara Falls", "Victoria Falls", "Angel Falls"], answer:0 },
+      { id:"peru", name:"Peru", flag:"🇵🇪", continent:"South America", capital:"Lima", lang:"Spanish & Quechua", food:"Ceviche & Lomo Saltado", faith:"Christianity & Andean Traditions", landmark:"Machu Picchu Inca Citadel", greeting:"Hola", speakText:"Hola", fact:"Machu Picchu is an ancient Inca city built high up in the Andes Mountains!", quizQ:"What ancient Inca city sits high in Peru's mountains?", options:["Machu Picchu", "Chichén Itzá", "Petra", "Tikal"], answer:0 },
+      { id:"colombia", name:"Colombia", flag:"🇨🇴", continent:"South America", capital:"Bogotá", lang:"Spanish", food:"Arepas & Bandeja Paisa", faith:"Christianity", landmark:"Caño Cristales (5-Color River)", greeting:"Hola", speakText:"Hola", fact:"Caño Cristales is called the 'River of Five Colors' because colorful plants bloom underwater!", quizQ:"What natural nickname is given to Colombia's Caño Cristales river?", options:["River of Five Colors", "Blue Danube", "Golden River", "Silver Stream"], answer:0 },
+      { id:"chile", name:"Chile", flag:"🇨🇱", continent:"South America", capital:"Santiago", lang:"Spanish", food:"Empanadas & Pastel de Choclo", faith:"Christianity", landmark:"Atacama Desert & Easter Island Moai", greeting:"Hola", speakText:"Hola", fact:"Easter Island (Rapa Nui) in Chile is famous for giant carved stone head statues!", quizQ:"What giant stone statues are carved on Chile's Easter Island?", options:["Moai Statues", "Sphinx", "Totem Poles", "Gargoyles"], answer:0 },
+      { id:"ecuador", name:"Ecuador", flag:"🇪🇨", continent:"South America", capital:"Quito", lang:"Spanish & Kichwa", food:"Encebollado", faith:"Christianity", landmark:"Galapagos Islands", greeting:"Hola", speakText:"Hola", fact:"The Galapagos Islands in Ecuador are home to giant 500-pound tortoises!", quizQ:"What giant reptiles are famous on Ecuador's Galapagos Islands?", options:["Giant Tortoises", "Komodo Dragons", "Iguanas", "Alligators"], answer:0 },
+      { id:"venezuela", name:"Venezuela", flag:"🇻🇪", continent:"South America", capital:"Caracas", lang:"Spanish", food:"Arepas", faith:"Christianity", landmark:"Angel Falls (World's Tallest Waterfall)", greeting:"Hola", speakText:"Hola", fact:"Angel Falls in Venezuela is the tallest uninterrupted waterfall on Earth!", quizQ:"What title does Venezuela's Angel Falls hold globally?", options:["Tallest Waterfall", "Widest Waterfall", "Coldest Waterfall", "Smallest Waterfall"], answer:0 },
+      { id:"bolivia", name:"Bolivia", flag:"🇧🇴", continent:"South America", capital:"Sucre & La Paz", lang:"Spanish, Quechua, Aymara", food:"Salteñas", faith:"Christianity & Indigenous Faiths", landmark:"Salar de Uyuni Salt Flats", greeting:"Kamisaraki", speakText:"Kamisaraki", fact:"Salar de Uyuni is the world's largest salt flat, acting like a giant mirror when wet!", quizQ:"Salar de Uyuni in Bolivia is the world's largest ______.", options:["Salt Flat", "Sand Dune", "Glacier", "Volcano"], answer:0 },
+
+      // OCEANIA
+      { id:"australia", name:"Australia", flag:"🇦🇺", continent:"Oceania", capital:"Canberra", lang:"English", food:"Meat Pies & Vegemite", faith:"Christianity & Indigenous Dreamtime", landmark:"Sydney Opera House & Great Barrier Reef", greeting:"G'day", speakText:"Gday", fact:"Australia is home to unique marsupials like kangaroos, koalas, and wombats!", quizQ:"What giant living coral structure off Australia can be seen from space?", options:["Great Barrier Reef", "Coral Sea", "Blue Hole", "Atoll"], answer:0 },
+      { id:"newzealand", name:"New Zealand", flag:"🇳🇿", continent:"Oceania", capital:"Wellington", lang:"English & Māori", food:"Hāngī & Pavlova", faith:"Christianity & Māori Traditions", landmark:"Milford Sound & Hobbiton", greeting:"Kia Ora", speakText:"Kia Ora", fact:"New Zealand is famous for flightless Kiwi birds and dramatic green mountains!", quizQ:"What is the native greeting in New Zealand's Māori language?", options:["Kia Ora", "Aloha", "Bula", "Jambo"], answer:0 },
+      { id:"fiji", name:"Fiji", flag:"🇫🇯", continent:"Oceania", capital:"Suva", lang:"Fijian, English, Hindi", food:"Kokoda", faith:"Christianity & Hinduism", landmark:"Mamanuca Islands", greeting:"Bula", speakText:"Bula", fact:"In Fiji, people welcome visitors with warm smiles and 'Bula!' greetings!", quizQ:"What friendly greeting word is used everywhere in Fiji?", options:["Bula", "Aloha", "Hola", "Ciao"], answer:0 },
+      { id:"samoa", name:"Samoa", flag:"🇼🇸", continent:"Oceania", capital:"Apia", lang:"Samoan & English", food:"Oka I'a", faith:"Christianity", landmark:"To Sua Ocean Trench", greeting:"Talofa", speakText:"Talofa", fact:"To Sua Ocean Trench is a natural swimming hole formed inside a lush lava blowhole!", quizQ:"What island swimming trench is famous in Samoa?", options:["To Sua Ocean Trench", "Blue Hole", "Marianas Trench", "Coral Pool"], answer:0 }
+    ];
+
+    const faithsData = [
+      { name:"Buddhism", icon:"fa-dharmachakra", color:"from-amber-400 to-yellow-500", desc:"Focuses on mindfulness, compassion, peace, and wisdom taught by the Buddha.", origin:"Ancient India", keyFact:"Followers practice meditation and peace toward all living beings." },
+      { name:"Hinduism", icon:"fa-om", color:"from-orange-400 to-rose-500", desc:"One of the oldest traditions focusing on karma, duty, and spiritual growth.", origin:"India", keyFact:"Celebrates colorful festivals like Diwali and Holi!" },
+      { name:"Islam", icon:"fa-star-and-crescent", color:"from-emerald-400 to-teal-600", desc:"Focuses on peace, prayer, charity, and devotion to God (Allah).", origin:"Arabian Peninsula", keyFact:"Holy month of Ramadan includes fasting, generosity, and family feasts." },
+      { name:"Christianity", icon:"fa-cross", color:"from-sky-400 to-blue-600", desc:"Based on the teachings of Jesus Christ focusing on love, kindness, and grace.", origin:"Middle East", keyFact:"Celebrated with holidays like Christmas and Easter." },
+      { name:"Judaism", icon:"fa-star-of-david", color:"from-indigo-400 to-blue-700", desc:"One of the earliest monotheistic faiths guided by the Torah and traditions.", origin:"Middle East", keyFact:"Celebrates Hanukkah with menorah candle lightings and dreidel games." },
+      { name:"Sikhism", icon:"fa-khanda", color:"from-amber-500 to-orange-600", desc:"Teaches equality, service to humanity, truthfulness, and one creator.", origin:"Punjab, South Asia", keyFact:"Sikh temples (Gurdwaras) serve free warm meals (Langar) to everyone regardless of background." },
+      { name:"Jainism", icon:"fa-hand-holding-heart", color:"from-rose-400 to-pink-600", desc:"Emphasizes absolute non-violence (Ahimsa), truthfulness, and care for every living creature.", origin:"India", keyFact:"Jains show gentle respect to all animals, insects, and nature." },
+      { name:"Shinto", icon:"fa-torii-gate", color:"from-red-400 to-rose-600", desc:"Ancient Japanese tradition honoring 'Kami'—spirits found in mountains, rivers, and trees.", origin:"Japan", keyFact:"Shrine entrances feature iconic red wooden Torii gates!" },
+      { name:"Druze Faith", icon:"fa-star", color:"from-teal-400 to-emerald-600", desc:"Monotheistic tradition combining philosophy, truth, unity, and brotherhood.", origin:"Middle East", keyFact:"Symbolized by a bright 5-colored star representing wisdom and harmony." },
+      { name:"Bahá'í Faith", icon:"fa-sun", color:"from-yellow-400 to-amber-500", desc:"Teaches the essential worth of all religions and the unity of all humanity.", origin:"Persia", keyFact:"Bahá'í houses of worship feature 9 open doors welcoming all people." },
+      { name:"Taoism", icon:"fa-yin-yang", color:"from-slate-600 to-slate-800", desc:"Focuses on living in harmony with nature and balance (Yin and Yang).", origin:"China", keyFact:"Teaches gentle simplicity, balance, and flowing with life." },
+      { name:"Indigenous Traditions", icon:"fa-tree", color:"from-emerald-500 to-green-700", desc:"Spiritual connections to land, ancestors, animals, and natural stewardship.", origin:"Worldwide", keyFact:"Passed down through storytelling, drumming, and sacred songs." }
+    ];
+
+    const festivalsData = [
+      { name:"Mid-Autumn Moon Festival", country:"China & East Asia", icon:"fa-moon", color:"from-amber-400 to-orange-500", desc:"A harvest celebration where families gather under the full moon, light colorful lanterns, and enjoy sweet stuffed mooncakes!", fact:"Legend says Chang'e, the Moon Goddess, lives on the moon with her friendly Jade Rabbit." },
+      { name:"Día de los Muertos (Day of the Dead)", country:"Mexico", icon:"fa-skull", color:"from-orange-500 to-pink-500", desc:"A vibrant, joyful celebration remembering loved ones with bright orange marigolds, decorative sugar skulls, and family altars.", fact:"It is a happy family reunion honoring memories with music, candles, and sweet bread!" },
+      { name:"Holi (Festival of Colors)", country:"India & Global", icon:"fa-palette", color:"from-pink-500 to-purple-500", desc:"Spring festival where people gather in streets to dance and splash bright colored powders and water on friends and family!", fact:"Each powder color carries symbolic meaning like love, new beginnings, and spring." },
+      { name:"Hanami (Cherry Blossom Festival)", country:"Japan", icon:"fa-tree text-pink-300", color:"from-pink-300 to-rose-400", desc:"Families picnic beneath soft pink blooming sakura cherry blossom trees to admire spring's natural beauty.", fact:"Special weather forecasters track the 'cherry blossom front' as it blooms across Japan!" },
+      { name:"Diwali (Festival of Lights)", country:"India & Global", icon:"fa-lightbulb", color:"from-yellow-400 to-amber-600", desc:"Celebrates the victory of light over darkness with clay lamps (diyas), fireworks, floral rangoli art, and sweet treats.", fact:"Houses are decorated with glowing lamps to welcome good luck and joy." },
+      { name:"Yi Peng Lantern Festival", country:"Thailand", icon:"fa-paper-plane", color:"from-amber-400 to-rose-400", desc:"Thousands of glowing sky lanterns (khom loi) are released into the night sky alongside rivers filled with floating flower baskets.", fact:"Releasing lanterns represents letting go of worries and sending wishes to the heavens." },
+      { name:"Carnival of Rio de Janeiro", country:"Brazil", icon:"fa-masks-theater", color:"from-purple-500 to-pink-500", desc:"A giant street festival with colorful feathered costumes, samba dance parades, and happy percussion bands.", fact:"The Rio Sambadrome parade features over 2 million street dancers every single day!" },
+      { name:"Songkran Water Festival", country:"Thailand", icon:"fa-droplet", color:"from-sky-400 to-blue-600", desc:"Thai New Year where entire cities join massive friendly water gun fights to wash away bad luck and welcome luck!", fact:"Water symbolizes cleansing and refreshing spirits for the year ahead." },
+      { name:"Eid al-Fitr", country:"Global Muslim Community", icon:"fa-star-and-crescent", color:"from-emerald-400 to-teal-600", desc:"Celebrates the end of Ramadan with morning prayers, new clothes, gifts, charity, and delicious feasting with loved ones.", fact:"Children often receive sweet gifts and coin packages called Eidi." },
+      { name:"Venice Carnival", country:"Italy", icon:"fa-mask", color:"from-indigo-500 to-purple-600", desc:"Famous for elaborate Venetian masks, silk gowns, and gondola parades along winding romantic canals.", fact:"Handcrafted Venetian masks allow everyone to join celebrations equally as equals!" },
+      { name:"Hanukkah", country:"Global Jewish Community", icon:"fa-menorah", color:"from-blue-500 to-indigo-600", desc:"The 8-day Festival of Lights celebrating miracles with menorah candle lighting, potato latkes, and dreidel games.", fact:"A total of 44 candles are lit across the eight nights of celebration!" },
+      { name:"Midsummer Solstice", country:"Sweden & Scandinavia", icon:"fa-sun", color:"from-yellow-300 to-amber-500", desc:"Celebrates the longest day of the year with floral head wreaths, maypole dancing, outdoor feasts, and songs.", fact:"In northern Scandinavia, the midnight sun keeps the night sky bright like daytime!" }
+    ];
+
+    let currentFilter = 'All';
+    let searchQuery = '';
+    let userStamps = JSON.parse(localStorage.getItem('kidshub_stamps') || '[]');
+    let currentActiveQuiz = null;
+    let currentShuffledQuiz = null;
+
+    function initApp() {
+      updateStampBadge();
+      renderCountries();
+      renderFaiths();
+      renderFestivals();
+      renderPassport();
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+      // Desktop active styling
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-400', 'text-slate-900', 'shadow-md', 'shadow-amber-200');
+        btn.classList.add('text-slate-600', 'hover:bg-slate-100');
+      });
+      const activeBtn = document.getElementById(`nav-${tabName}`);
+      if (activeBtn) {
+        activeBtn.classList.add('bg-amber-400', 'text-slate-900', 'shadow-md', 'shadow-amber-200');
+        activeBtn.classList.remove('text-slate-600');
+      }
+
+      // Mobile active styling
+      document.querySelectorAll('.m-nav-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-400', 'text-slate-900');
+        btn.classList.add('bg-white', 'text-slate-600');
+      });
+      const activeMBtn = document.getElementById(`m-nav-${tabName}`);
+      if (activeMBtn) {
+        activeMBtn.classList.add('bg-amber-400', 'text-slate-900');
+        activeMBtn.classList.remove('bg-white', 'text-slate-600');
+      }
+
+      if (tabName === 'passport') renderPassport();
+    }
+
+    function filterContinent(continent) {
+      currentFilter = continent;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('bg-amber-400', 'text-slate-900', 'border-amber-300', 'shadow-sm');
+        btn.classList.add('bg-slate-100', 'text-slate-600', 'border-transparent');
+      });
+      event.target.classList.add('bg-amber-400', 'text-slate-900', 'border-amber-300', 'shadow-sm');
+      event.target.classList.remove('bg-slate-100', 'text-slate-600', 'border-transparent');
+      renderCountries();
+    }
+
+    function handleSearch() {
+      searchQuery = document.getElementById('global-search').value.toLowerCase().trim();
+      if (document.getElementById('tab-explore').classList.contains('hidden')) {
+        switchTab('explore');
+      }
+      renderCountries();
+    }
+
+    function renderCountries() {
+      const container = document.getElementById('countries-grid');
+      let filtered = countriesData.filter(c => {
+        const matchesContinent = currentFilter === 'All' || c.continent === currentFilter;
+        const matchesSearch = !searchQuery || 
+          c.name.toLowerCase().includes(searchQuery) ||
+          c.capital.toLowerCase().includes(searchQuery) ||
+          c.food.toLowerCase().includes(searchQuery) ||
+          c.landmark.toLowerCase().includes(searchQuery);
+        return matchesContinent && matchesSearch;
+      });
+
+      document.getElementById('country-count-label').innerText = `Showing ${filtered.length} of ${countriesData.length} Nations`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center space-y-3">
+            <div class="text-6xl">🔍</div>
+            <h3 class="text-xl font-black text-slate-700">No nations matched your search!</h3>
+            <p class="text-sm text-slate-500 font-bold">Try searching for another country, capital city, or tasty food!</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const isStamped = userStamps.includes(c.id);
+        return `
+          <div class="kid-card bg-white rounded-3xl p-5 border-2 border-slate-100 shadow-sm flex flex-col justify-between relative overflow-hidden group">
+            
+            ${isStamped ? `
+              <div class="absolute top-3 right-3 stamp-badge bg-emerald-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow-md flex items-center gap-1">
+                <i class="fa-solid fa-stamp"></i> STAMPED
+              </div>
+            ` : ''}
+
+            <div>
+              <div class="flex items-center gap-3 mb-3">
+                <span class="text-4xl leading-none group-hover:scale-110 transition-transform">${c.flag}</span>
+                <div>
+                  <h3 class="text-xl font-black text-slate-800 leading-tight">${c.name}</h3>
+                  <span class="text-xs font-extrabold text-sky-600 uppercase tracking-wider">${c.continent}</span>
+                </div>
+              </div>
+
+              <div class="space-y-2 text-xs font-bold text-slate-600 my-3 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">Capital:</span>
+                  <span class="text-slate-800 font-extrabold">${c.capital}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">Famous Food:</span>
+                  <span class="text-slate-800 font-extrabold truncate max-w-[140px]">${c.food}</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">Greeting:</span>
+                  <button onclick="speakGreeting('${c.speakText}')" class="text-amber-600 hover:text-amber-700 font-black flex items-center gap-1 bg-amber-100 px-2 py-0.5 rounded-lg">
+                    <i class="fa-solid fa-volume-high text-xs"></i> "${c.greeting}"
+                  </button>
+                </div>
+              </div>
+
+              <!-- SINGLE CLEAN LANDMARK ITEM -->
+              <div class="text-xs font-bold text-slate-600 mb-4 bg-amber-50/60 p-2.5 rounded-xl border border-amber-100 flex items-center gap-2">
+                <i class="fa-solid fa-monument text-amber-500 text-sm"></i>
+                <span class="truncate"><strong>Landmark:</strong> ${c.landmark}</span>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+              <button onclick="openDetailModal('${c.id}')" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-xl text-xs transition">
+                <i class="fa-solid fa-book-open"></i> Learn More
+              </button>
+              <button onclick="openQuizModal('${c.id}')" class="w-full py-2 ${isStamped ? 'bg-emerald-500 text-white' : 'bg-amber-400 hover:bg-amber-500 text-slate-900'} font-black rounded-xl text-xs transition shadow-sm">
+                <i class="fa-solid ${isStamped ? 'fa-check-double' : 'fa-certificate'}"></i> ${isStamped ? 'Passed' : 'Take Quiz'}
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderFaiths() {
+      const container = document.getElementById('faiths-grid');
+      container.innerHTML = faithsData.map(f => `
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-100 shadow-sm space-y-3 kid-card">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-r ${f.color} flex items-center justify-center text-white text-2xl shadow-md">
+            <i class="fa-solid ${f.icon}"></i>
+          </div>
+          <h3 class="text-2xl font-black text-slate-800">${f.name}</h3>
+          <p class="text-xs font-extrabold text-purple-600 uppercase">Origin: ${f.origin}</p>
+          <p class="text-sm font-bold text-slate-600 leading-relaxed">${f.desc}</p>
+          <div class="bg-purple-50 p-3 rounded-2xl border border-purple-100 text-xs font-extrabold text-purple-900 flex items-start gap-2">
+            <span>✨</span>
+            <span>${f.keyFact}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderFestivals() {
+      const container = document.getElementById('festivals-grid');
+      container.innerHTML = festivalsData.map(f => `
+        <div class="bg-white rounded-3xl p-6 border-2 border-slate-100 shadow-sm space-y-3 kid-card">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-r ${f.color} flex items-center justify-center text-white text-2xl shadow-md">
+            <i class="fa-solid ${f.icon}"></i>
+          </div>
+          <div>
+            <h3 class="text-xl font-black text-slate-800">${f.name}</h3>
+            <span class="text-xs font-extrabold text-rose-500 uppercase">${f.country}</span>
+          </div>
+          <p class="text-sm font-bold text-slate-600 leading-relaxed">${f.desc}</p>
+          <div class="bg-rose-50 p-3 rounded-2xl border border-rose-100 text-xs font-extrabold text-rose-900 flex items-start gap-2">
+            <span>🎉</span>
+            <span>${f.fact}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderPassport() {
+      const stampsGrid = document.getElementById('passport-stamps-grid');
+      const count = userStamps.length;
+      const total = countriesData.length;
+      const percent = Math.round((count / total) * 100);
+
+      document.getElementById('passport-percent').innerText = `${percent}%`;
+      document.getElementById('passport-progress-bar').style.width = `${percent}%`;
+
+      if (userStamps.length === 0) {
+        stampsGrid.innerHTML = `
+          <div class="col-span-full py-10 text-center space-y-2">
+            <div class="text-5xl">🛂</div>
+            <h4 class="text-lg font-black text-slate-700">Your Passport is Empty!</h4>
+            <p class="text-xs text-slate-500 font-bold">Pass country quizzes in the Explore tab to collect official stamps!</p>
+          </div>
+        `;
+        return;
+      }
+
+      stampsGrid.innerHTML = userStamps.map(id => {
+        const country = countriesData.find(c => c.id === id);
+        if (!country) return '';
+        return `
+          <div class="bg-amber-50 rounded-2xl p-4 border-2 border-amber-300 text-center space-y-2 stamp-badge shadow-sm relative group">
+            <div class="text-4xl">${country.flag}</div>
+            <div class="font-black text-slate-800 text-xs truncate">${country.name}</div>
+            <span class="inline-block bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase">
+              <i class="fa-solid fa-check"></i> Passed
+            </span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateStampBadge() {
+      document.getElementById('stamp-count-badge').innerText = userStamps.length;
+    }
+
+    function resetPassport() {
+      if (confirm('Are you sure you want to reset all your earned passport stamps?')) {
+        userStamps = [];
+        localStorage.removeItem('kidshub_stamps');
+        updateStampBadge();
+        renderPassport();
+        renderCountries();
+      }
+    }
+
+    function openDetailModal(countryId) {
+      const c = countriesData.find(item => item.id === countryId);
+      if (!c) return;
+
+      const isStamped = userStamps.includes(c.id);
+
+      document.getElementById('modal-detail-content').innerHTML = `
+        <div class="bg-gradient-to-r from-sky-400 to-blue-500 p-6 text-white relative">
+          <button onclick="closeDetailModal()" class="absolute top-4 right-4 w-9 h-9 bg-white/20 hover:bg-white/30 rounded-full font-black text-white flex items-center justify-center">✕</button>
+          <div class="flex items-center gap-4">
+            <span class="text-6xl">${c.flag}</span>
+            <div>
+              <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-black uppercase text-yellow-200">${c.continent}</span>
+              <h2 class="text-3xl font-black mt-1">${c.name}</h2>
+              <p class="text-sky-100 text-xs font-bold">Capital: ${c.capital}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+          <div class="grid grid-cols-2 gap-3 text-xs font-bold">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-slate-400 block text-[10px] uppercase">Languages</span>
+              <span class="text-slate-800 font-extrabold text-sm">${c.lang}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-slate-400 block text-[10px] uppercase">Traditional Dish</span>
+              <span class="text-slate-800 font-extrabold text-sm">${c.food}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100 col-span-2">
+              <span class="text-slate-400 block text-[10px] uppercase">Major Faiths & Traditions</span>
+              <span class="text-slate-800 font-extrabold text-sm">${c.faith}</span>
+            </div>
+          </div>
+
+          <!-- SINGLE LANDMARK ITEM IN MODAL -->
+          <div class="bg-amber-50 p-4 rounded-2xl border-2 border-amber-200 space-y-1">
+            <div class="flex items-center gap-2 text-amber-800 font-black text-sm">
+              <i class="fa-solid fa-landmark text-amber-500"></i> Famous Landmark
+            </div>
+            <p class="text-xs font-bold text-slate-700">${c.landmark}</p>
+          </div>
+
+          <div class="bg-sky-50 p-4 rounded-2xl border border-sky-100 space-y-1">
+            <div class="text-xs font-black text-sky-800 uppercase tracking-wider">💡 Fun Junior Explorer Fact</div>
+            <p class="text-xs font-extrabold text-slate-700 leading-relaxed">${c.fact}</p>
+          </div>
+
+          <div class="flex items-center justify-between pt-2">
+            <button onclick="speakGreeting('${c.speakText}')" class="px-4 py-2.5 bg-amber-100 hover:bg-amber-200 text-amber-800 font-black rounded-xl text-xs flex items-center gap-2">
+              <i class="fa-solid fa-volume-high"></i> Say "${c.greeting}"
+            </button>
+            <button onclick="closeDetailModal(); openQuizModal('${c.id}')" class="px-5 py-2.5 ${isStamped ? 'bg-emerald-500 text-white' : 'bg-amber-400 hover:bg-amber-500 text-slate-900'} font-black rounded-xl text-xs transition shadow-sm">
+              <i class="fa-solid ${isStamped ? 'fa-check' : 'fa-certificate'}"></i> ${isStamped ? 'Retake Quiz' : 'Take Quiz for Stamp'}
+            </button>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('modal-detail').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('modal-detail').classList.add('hidden');
+    }
+
+    /* Fisher-Yates shuffle array utility */
+    function shuffleArray(array) {
+      const arr = [...array];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function openQuizModal(countryId) {
+      const c = countriesData.find(item => item.id === countryId);
+      if (!c) return;
+
+      currentActiveQuiz = c;
+
+      // Prepare options objects mapping original text and correct status
+      const optionObjects = c.options.map((optText, index) => ({
+        text: optText,
+        isCorrect: index === c.answer
+      }));
+
+      // Dynamically shuffle options so correct answer position is unpredictable
+      const shuffledOptions = shuffleArray(optionObjects);
+      currentShuffledQuiz = shuffledOptions;
+
+      document.getElementById('modal-quiz-content').innerHTML = `
+        <div class="text-center space-y-3">
+          <div class="text-5xl">${c.flag}</div>
+          <span class="bg-sky-100 text-sky-800 text-xs font-black px-3 py-1 rounded-full uppercase">
+            Stamp Challenge: ${c.name}
+          </span>
+          <h3 class="text-xl font-black text-slate-800 leading-snug">${c.quizQ}</h3>
+
+          <div class="space-y-2 pt-3" id="quiz-options">
+            ${shuffledOptions.map((optObj, idx) => `
+              <button onclick="submitQuizAnswer(${idx})" class="w-full py-3 px-4 bg-slate-100 hover:bg-amber-100 border-2 border-slate-200 hover:border-amber-400 rounded-2xl font-black text-slate-700 text-sm transition text-left flex items-center justify-between group">
+                <span>${optObj.text}</span>
+                <i class="fa-regular fa-circle text-slate-400 group-hover:text-amber-500"></i>
+              </button>
+            `).join('')}
+          </div>
+
+          <div id="quiz-feedback" class="mt-4 text-xs font-black min-h-[24px]"></div>
+        </div>
+      `;
+
+      document.getElementById('modal-quiz').classList.remove('hidden');
+    }
+
+    function submitQuizAnswer(shuffledIndex) {
+      if (!currentActiveQuiz || !currentShuffledQuiz) return;
+
+      const feedback = document.getElementById('quiz-feedback');
+      const selectedObj = currentShuffledQuiz[shuffledIndex];
+
+      if (selectedObj && selectedObj.isCorrect) {
+        feedback.className = "mt-4 text-xs font-black text-emerald-600 bg-emerald-50 p-3 rounded-2xl border border-emerald-200";
+        feedback.innerHTML = "🎉 Correct! You unlocked your official Passport Stamp!";
+
+        // Confetti celebration burst
+        confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+
+        if (!userStamps.includes(currentActiveQuiz.id)) {
+          userStamps.push(currentActiveQuiz.id);
+          localStorage.setItem('kidshub_stamps', JSON.stringify(userStamps));
+          updateStampBadge();
+          renderCountries();
+        }
+
+        setTimeout(() => {
+          closeQuizModal();
+        }, 1800);
+
+      } else {
+        feedback.className = "mt-4 text-xs font-black text-rose-600 bg-rose-50 p-3 rounded-2xl border border-rose-200";
+        feedback.innerHTML = "❌ Oops! Give it another try!";
+      }
+    }
+
+    function closeQuizModal() {
+      document.getElementById('modal-quiz').classList.add('hidden');
+      currentActiveQuiz = null;
+      currentShuffledQuiz = null;
+    }
+
+    function speakGreeting(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.85;
+        utterance.pitch = 1.1;
+        window.speechSynthesis.speak(utterance);
+      } else {
+        alert(`Pronunciation: "${text}"`);
+      }
+    }
+
+    // Initialize on window load
+    window.onload = initApp;
+  </script>
+</body>
+</html>
